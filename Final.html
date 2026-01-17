@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geo Dash + High Score</title>
+    <style>
+        body { margin: 0; padding: 0; overflow: hidden; background-color: #1a1a1a; font-family: 'Arial',sans-serif; }
+        #gameCanvas { display: block; background: linear-gradient(#222, #000); }
+        #ui {
+            position: absolute; top: 20px; left: 20px; color: white;
+            font-size: 20px; pointer-events: none; text-shadow: 2px 2px 4px #000;
+        }
+        #instructions {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            color: white; text-align: center; background: rgba(0,0,0,0.85);
+            padding: 30px; border-radius: 15px; border: 2px solid #00ffcc;
+            min-width: 300px;
+        }
+        .best-label { color: #ffcc00; font-weight: bold; }
+        button { 
+            padding: 12px 25px; font-size: 18px; cursor: pointer; 
+            background: #00ffcc; border: none; border-radius: 5px; font-weight: bold;
+            transition: transform 0.1s;
+        }
+        button:active { transform: scale(0.95); }
+    </style>
+</head>
+<body>
+
+    <div id="ui">
+        Score: <span id="score">0</span><br>
+        <span class="best-label">Best: <span id="highScoreDisplay">0</span></span>
+    </div>
+
+    <div id="instructions">
+        <h1 id="mainTitle">GEOMETRY DODGE</h1>
+        <div id="statsArea"></div>
+        <p>Press <b>SPACE</b> or <b>CLICK</b> to Jump</p>
+        <button onclick="startGame()" style="padding: 10px 20px; cursor: pointer-events;">START GAME</button>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const scoreElement = document.getElementById('score');
+    const highScoreDisplay = document.getElementById('highScoreDisplay');
+    const startScreen = document.getElementById('instructions');
+    const mainTitle = document.getElementById('mainTitle');
+    const statsArea = document.getElementById('statsArea');
+
+    // Game Constants
+    const GRAVITY = 0.9;
+    const JUMP_FORCE = -15;
+    const GROUND_HEIGHT = 300;
+    const PLAYER_SIZE = 40;
+
+    // Game State
+    let gameActive = false;
+    let score = 0;
+    let gameSpeed = 9;
+    let animationId;
+    let obstacles = [];
+    let highScore = localStorage.getItem('geoDodgeBest') || 0;
+
+    // Player Object
+    const player = {
+        x: 10, y: 10, vy: 0, rotation: 0, grounded: true
+    };
+
+    // Initialize UI
+    highScoreDisplay.innerText = highScore;
+
+    function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // Input Handling
+    function jump() {
+        if (player.grounded && gameActive) {
+            player.vy = JUMP_FORCE;
+            player.grounded = false;
+        }
+    }
+    window.addEventListener('keydown', (e) => { if(e.code === 'Space' || e.code === 'ArrowUp') jump(); });
+    window.addEventListener('mousedown', jump);
+
+    function spawnObstacle() {
+        if (!gameActive) return;
+        
+        const type = Math.random() > 0.3 ? 'spike' : 'block';
+        obstacles.push({
+            x: canvas.width + 100,
+            y: canvas.height - GROUND_HEIGHT,
+            width: 40, height: 40,
+            type: type
+        });
+        
+        const nextSpawn = Math.max(500, Math.random() * (1500 - gameSpeed * 40) + 700);
+        setTimeout(spawnObstacle, nextSpawn);
+    }
+
+    function startGame() {
+        if (gameActive) return;
+        
+        // Reset State
+        gameActive = true;
+        score = 0;
+        gameSpeed = 6;
+        obstacles = [];
+        player.y = canvas.height - GROUND_HEIGHT - PLAYER_SIZE;
+        player.vy = 0;
+        player.rotation = 0;
+        
+        scoreElement.innerText = score;
+        startScreen.style.display = 'none';
+        
+        spawnObstacle();
+        update();
+    }
+
+    function gameOver() {
+        gameActive = false;
+        cancelAnimationFrame(animationId);
+
+        let isNewRecord = false;
+        if (score > highScore) {
+            highScore = score;
+            localStorage.setItem('geoDodgeBest', highScore);
+            highScoreDisplay.innerText = highScore;
+            isNewRecord = true;
+        }
+
+        startScreen.style.display = 'block';
+        mainTitle.innerText = isNewRecord ? "NEW RECORD!" : "GAME OVER";
+        mainTitle.style.color = isNewRecord ? "#ffcc00" : "#fff";
+        
+        statsArea.innerHTML = `
+            <p style="font-size: 24px;">Score: ${score}</p>
+            <p class="best-label">Personal Best: ${highScore}</p>
+            <br>
+        `;
+    }
+
+    function update() {
+        if (!gameActive) return;
+
+        // Physics
+        player.vy += GRAVITY;
+        player.y += player.vy;
+
+        const groundLevel = canvas.height - GROUND_HEIGHT - PLAYER_SIZE;
+        if (player.y >= groundLevel) {
+            player.y = groundLevel;
+            player.vy = 0;
+            player.grounded = true;
+            player.rotation = Math.round(player.rotation / 90) * 90;
+        } else {
+            player.rotation += 5; // Roll in mid-air
+        }
+
+        // Obstacle Logic
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+            const obs = obstacles[i];
+            obs.x -= gameSpeed;
+
+            // Collision (using slightly smaller hitboxes for better "feel")
+            const buffer = 8;
+            if (player.x + buffer < obs.x + obs.width - buffer &&
+                player.x + PLAYER_SIZE - buffer > obs.x + buffer &&
+                player.y + buffer < obs.y && 
+                player.y + PLAYER_SIZE - buffer > obs.y - obs.height) {
+                gameOver();
+                return;
+            }
+
+            // Score point when obstacle passed
+            if (obs.x + obs.width < player.x && !obs.passed) {
+                obs.passed = true;
+                score++;
+                scoreElement.innerText = score;
+                gameSpeed += 0.1; // Speed up
+            }
+
+            // Remove off-screen
+            if (obs.x + obs.width < -50) {
+                obstacles.splice(i, 1);
+            }
+        }
+
+        draw();
+        animationId = requestAnimationFrame(update);
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw Ground Line & Fill
+        ctx.fillStyle = '#0077ff';
+        ctx.fillRect(0, canvas.height - GROUND_HEIGHT, canvas.width, 4);
+        ctx.fillStyle = '#002244';
+        ctx.fillRect(0, canvas.height - GROUND_HEIGHT + 4, canvas.width, GROUND_HEIGHT);
+
+        // Draw Player
+        ctx.save();
+        ctx.translate(player.x + PLAYER_SIZE/2, player.y + PLAYER_SIZE/2);
+        ctx.rotate(player.rotation * Math.PI / 180);
+        ctx.fillStyle = '#000';
+        ctx.fillRect(-PLAYER_SIZE/2, -PLAYER_SIZE/2, PLAYER_SIZE, PLAYER_SIZE);
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(-PLAYER_SIZE/2, -PLAYER_SIZE/2, PLAYER_SIZE, PLAYER_SIZE);
+        // Eyes
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(8, -12, 6, 6);
+        ctx.fillRect(8, 4, 6, 6);
+        ctx.restore();
+
+        // Draw Obstacles
+        obstacles.forEach(obs => {
+            ctx.fillStyle = obs.type === 'spike' ? '#ff3366' : '#ffcc00';
+            if (obs.type === 'spike') {
+                ctx.beginPath();
+                ctx.moveTo(obs.x, obs.y);
+                ctx.lineTo(obs.x + obs.width/2, obs.y - obs.height);
+                ctx.lineTo(obs.x + obs.width, obs.y);
+                ctx.fill();
+            } else {
+                ctx.fillRect(obs.x, obs.y - obs.height, obs.width, obs.height);
+                ctx.strokeStyle = '#fff';
+                ctx.strokeRect(obs.x, obs.y - obs.height, obs.width, obs.height);
+            }
+        });
+    }
+
+    // Initial Frame
+    resize();
+    draw();
+</script>
+</body>
+</html>
+>
