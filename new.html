@@ -1,0 +1,1449 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+name="viewport"
+content="width=device-width,initial-scale=1.0">
+
+<title>SafeAlert</title>
+
+<link
+rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial,sans-serif;
+}
+
+body{
+background:#070707;
+color:white;
+min-height:100vh;
+overflow-x:hidden;
+}
+
+.page{
+display:none;
+padding:20px;
+padding-bottom:110px;
+}
+
+.page.active{
+display:block;
+}
+
+.title{
+font-size:30px;
+font-weight:700;
+margin-bottom:8px;
+}
+
+.sub{
+color:#999;
+margin-bottom:18px;
+}
+
+.location{
+
+background:#111;
+
+padding:20px;
+
+border-radius:24px;
+
+text-align:center;
+
+color:#ff5d5d;
+
+line-height:1.8;
+
+margin-bottom:14px;
+
+}
+
+.primary-btn{
+
+width:100%;
+
+padding:16px;
+
+border:none;
+
+border-radius:18px;
+
+background:#1976ff;
+
+color:white;
+
+font-size:17px;
+
+margin-top:12px;
+
+}
+
+/* LIVE LOCATION */
+
+.live-box{
+
+display:flex;
+
+flex-direction:column;
+
+align-items:center;
+
+margin-top:22px;
+
+}
+
+.live-icon{
+
+width:90px;
+
+height:90px;
+
+border-radius:50%;
+
+background:#111;
+
+display:flex;
+
+justify-content:center;
+
+align-items:center;
+
+font-size:42px;
+
+}
+
+.live-title{
+
+margin-top:14px;
+
+font-size:18px;
+
+font-weight:bold;
+
+color:#1976ff;
+
+}
+
+.live-value{
+
+margin-top:14px;
+
+width:100%;
+
+padding:20px;
+
+background:#111;
+
+border-radius:24px;
+
+text-align:center;
+
+font-size:18px;
+
+}
+
+/* SOS */
+
+.sos-wrap{
+
+display:flex;
+
+justify-content:center;
+
+align-items:center;
+
+margin-top:26px;
+
+}
+
+.sos-btn{
+
+width:250px;
+
+height:250px;
+
+border:none;
+
+border-radius:50%;
+
+background:#b00000;
+
+color:white;
+
+font-size:60px;
+
+box-shadow:
+
+0 0 40px red,
+
+0 0 100px rgba(255,0,0,.45);
+
+}
+
+/* STATS */
+
+.stats{
+
+display:flex;
+
+gap:14px;
+
+margin-top:22px;
+
+}
+
+.stat-card{
+
+flex:1;
+
+background:#111;
+
+padding:28px;
+
+border-radius:26px;
+
+text-align:center;
+
+}
+
+.stat-number{
+
+font-size:60px;
+
+}
+
+.stat-text{
+
+margin-top:10px;
+
+color:#888;
+
+}
+
+.card{
+background:#111;
+padding:18px;
+border-radius:22px;
+margin-top:16px;
+}
+
+input{
+width:100%;
+padding:15px;
+margin-top:12px;
+border:none;
+border-radius:14px;
+background:#1d1d1d;
+color:white;
+}
+
+.contact{
+background:#181818;
+padding:16px;
+margin-top:12px;
+border-radius:16px;
+}
+
+.profile-box{
+background:#111;
+padding:22px;
+border-radius:22px;
+margin-top:16px;
+}
+
+.history{
+background:#111;
+padding:16px;
+border-radius:16px;
+margin-top:12px;
+}
+
+.bottom{
+
+position:fixed;
+
+left:0;
+
+right:0;
+
+bottom:0;
+
+height:82px;
+
+background:#080808;
+
+display:flex;
+
+justify-content:space-around;
+
+align-items:center;
+
+border-top:1px solid #222;
+
+}
+
+.item{
+
+display:flex;
+
+flex-direction:column;
+
+align-items:center;
+
+gap:4px;
+
+font-size:12px;
+
+color:#777;
+
+}
+
+.item i{
+
+font-size:22px;
+
+}
+
+.selected{
+
+color:#1976ff;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<!-- SOS -->
+
+<section
+id="sos"
+class="page active">
+
+<div class="title">
+
+SafeAlert
+
+</div>
+
+<div class="sub">
+
+Your emergency safety companion
+
+</div>
+
+<div
+id="location"
+class="location">
+
+Waiting for permission...
+
+</div>
+
+<button
+class="primary-btn"
+onclick="getLocation()">
+
+Refresh Location
+
+</button>
+
+<div class="live-box">
+
+<div class="live-icon">
+
+📍
+
+</div>
+
+<div class="live-title">
+
+LIVE LOCATION
+
+</div>
+
+<div
+id="liveLocation"
+class="live-value">
+
+Waiting...
+
+</div>
+
+</div>
+
+<div class="sos-wrap">
+
+<button
+class="sos-btn"
+onclick="sendSOS()">
+
+SOS
+
+</button>
+
+</div>
+
+<div class="stats">
+
+<div class="stat-card">
+
+<div
+id="contactCount"
+class="stat-number">
+
+0
+
+</div>
+
+<div class="stat-text">
+
+Emergency Contacts
+
+</div>
+
+</div>
+
+<div class="stat-card">
+
+<div
+id="alertCount"
+class="stat-number">
+
+0
+
+</div>
+
+<div class="stat-text">
+
+Past Alerts
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+<!-- CONTACTS -->
+
+<section
+id="contacts"
+class="page">
+
+<div class="title">
+
+Emergency Contacts
+
+</div>
+
+<div class="card">
+
+<input
+id="name"
+type="text"
+placeholder="Contact Name">
+
+<input
+id="phone"
+type="tel"
+placeholder="Phone Number">
+
+<button
+class="primary-btn"
+onclick="saveContact()">
+
+Save Contact
+
+</button>
+
+</div>
+
+<div
+id="contactList">
+
+</div>
+
+</section>
+
+<!-- SAFETY -->
+
+<section
+id="safety"
+class="page">
+
+<div class="title">
+
+Emergency Calls
+
+</div>
+
+<div class="sub">
+
+Quick emergency access
+
+</div>
+
+<div class="card">
+
+<button
+class="primary-btn"
+onclick="callNumber('100')">
+
+👮 Police — 100
+
+</button>
+
+<button
+class="primary-btn"
+onclick="callNumber('1098')">
+
+🧒 Child Helpline — 1098
+
+</button>
+
+<button
+class="primary-btn"
+onclick="callNumber('1091')">
+
+👩 Women Safety — 1091
+
+</button>
+
+<button
+class="primary-btn"
+onclick="callNumber('112')">
+
+🚨 National Emergency — 112
+
+</button>
+
+<button
+class="primary-btn"
+onclick="callNumber('108')">
+
+🚑 Ambulance — 108
+
+</button>
+
+<button
+class="primary-btn"
+onclick="callNumber('101')">
+
+🔥 Fire Brigade — 101
+
+</button>
+
+</div>
+
+<h3
+style="margin-top:18px">
+
+Saved Contacts
+
+</h3>
+
+<div
+id="safetyContacts">
+
+</div>
+
+</section>
+
+<!-- HISTORY -->
+
+<section
+id="history"
+class="page">
+
+<div class="title">
+
+SOS History
+
+</div>
+
+<div class="sub">
+
+Emergency records
+
+</div>
+
+<div
+id="historyList">
+
+</div>
+
+</section>
+
+<!-- PROFILE -->
+
+<section
+id="profile"
+class="page">
+
+<div class="title">
+
+Profile
+
+</div>
+
+<div class="sub">
+
+Your details for SOS sharing
+
+</div>
+
+<div
+class="profile-box">
+
+<div
+class="profile-title">
+
+Your Details
+
+</div>
+
+<div
+class="profile-sub">
+
+These details may be included in SOS alerts
+
+</div>
+
+<input
+id="profileName"
+placeholder="Full Name">
+
+<input
+id="profilePhone"
+type="tel"
+placeholder="Phone Number">
+
+<input
+id="profileEmail"
+type="email"
+placeholder="Email (Optional)">
+
+<button
+class="primary-btn"
+onclick="saveProfile()">
+
+Save Profile
+
+</button>
+
+<div
+id="profileInfo"
+class="profile-info">
+
+No profile saved
+
+</div>
+
+</div>
+
+</section>
+
+<!-- BOTTOM NAV -->
+
+<nav
+class="bottom">
+
+<div
+class="item selected"
+onclick="tab('sos',this)">
+
+<i
+class="fa-solid fa-shield"></i>
+
+<span>SOS</span>
+
+</div>
+
+<div
+class="item"
+onclick="tab('contacts',this)">
+
+<i
+class="fa-solid fa-users"></i>
+
+<span>Contacts</span>
+
+</div>
+
+<div
+class="item"
+onclick="tab('safety',this)">
+
+<i
+class="fa-solid fa-heart"></i>
+
+<span>Safety</span>
+
+</div>
+
+<div
+class="item"
+onclick="tab('history',this)">
+
+<i
+class="fa-solid fa-clock"></i>
+
+<span>History</span>
+
+</div>
+
+<div
+class="item"
+onclick="tab('profile',this)">
+
+<i
+class="fa-solid fa-user"></i>
+
+<span>Profile</span>
+
+</div>
+
+</nav>
+<script>
+
+let lat=null;
+let lng=null;
+
+let lastShake=0;
+
+/* STORAGE */
+
+function read(key,fallback=[]){
+
+try{
+
+return JSON.parse(
+localStorage.getItem(key)
+)||fallback;
+
+}
+
+catch{
+
+return fallback;
+
+}
+
+}
+
+function write(key,value){
+
+localStorage.setItem(
+key,
+JSON.stringify(value)
+);
+
+}
+
+/* STATS */
+
+function updateStats(){
+
+const contacts=
+read(
+"contacts",
+[]
+).length;
+
+const history=
+read(
+"history",
+[]
+).length;
+
+if(
+contactCount
+)
+contactCount.innerText=
+contacts;
+
+if(
+alertCount
+)
+alertCount.innerText=
+history;
+
+}
+
+/* LOCATION */
+
+async function getLocation(){
+
+const box=
+document.getElementById(
+"location"
+);
+
+const live=
+document.getElementById(
+"liveLocation"
+);
+
+return new Promise(
+
+(resolve)=>{
+
+if(
+!navigator.geolocation
+){
+
+box.innerHTML=
+"❌ GPS unsupported";
+
+resolve(false);
+
+return;
+
+}
+
+box.innerHTML=
+
+"📍 Fetching location...";
+
+navigator.geolocation
+.getCurrentPosition(
+
+(pos)=>{
+
+lat=
+pos.coords.latitude;
+
+lng=
+pos.coords.longitude;
+
+box.innerHTML=
+
+`
+📍 Location Ready
+
+<br><br>
+
+Lat:
+${lat.toFixed(6)}
+
+<br>
+
+Lng:
+${lng.toFixed(6)}
+`;
+
+if(
+live
+){
+
+live.innerHTML=
+
+`
+${lat.toFixed(6)}
+
+,
+${lng.toFixed(6)}
+
+<br>
+
+±${Math.round(
+pos.coords.accuracy
+)}m
+`;
+
+}
+
+resolve(true);
+
+},
+
+(err)=>{
+
+if(
+err.code===1
+){
+
+box.innerHTML=
+
+`
+❌ Permission denied
+
+<br><br>
+
+Tap Refresh Location
+`;
+
+}
+
+else{
+
+box.innerHTML=
+
+`
+❌ Unable to fetch
+`;
+
+}
+
+if(
+live
+)
+live.innerHTML=
+"Waiting...";
+
+resolve(false);
+
+},
+
+{
+
+enableHighAccuracy:true,
+
+timeout:15000,
+
+maximumAge:0
+
+}
+
+);
+
+}
+
+);
+
+}
+
+/* CONTACTS */
+
+function saveContact(){
+
+const name=
+document
+.getElementById(
+"name"
+);
+
+const phone=
+document
+.getElementById(
+"phone"
+);
+
+if(
+!name.value||
+!phone.value
+){
+
+alert(
+"Enter details"
+);
+
+return;
+
+}
+
+const list=
+read(
+"contacts",
+[]
+);
+
+list.push({
+
+name:
+name.value,
+
+phone:
+phone.value
+
+});
+
+write(
+"contacts",
+list
+);
+
+name.value="";
+phone.value="";
+
+showContacts();
+
+showSafety();
+
+updateStats();
+
+}
+
+function deleteContact(i){
+
+const list=
+read(
+"contacts",
+[]
+);
+
+list.splice(
+i,
+1
+);
+
+write(
+"contacts",
+list
+);
+
+showContacts();
+
+showSafety();
+
+updateStats();
+
+}
+
+function showContacts(){
+
+const box=
+contactList;
+
+box.innerHTML="";
+
+const data=
+read(
+"contacts",
+[]
+);
+
+if(
+data.length===0
+){
+
+box.innerHTML=
+
+`
+<div class="card">
+
+No contacts
+
+</div>
+`;
+
+return;
+
+}
+
+data.forEach(
+
+(c,i)=>{
+
+box.innerHTML+=
+
+`
+
+<div class="contact">
+
+👤 ${c.name}
+
+<br><br>
+
+📞 ${c.phone}
+
+<br><br>
+
+<button
+class="primary-btn"
+
+onclick=
+
+"deleteContact(${i})">
+
+Delete
+
+</button>
+
+</div>
+
+`;
+
+}
+
+);
+
+}
+
+/* PROFILE */
+
+function saveProfile(){
+
+write(
+"profile",
+{
+
+name:
+profileName.value,
+
+phone:
+profilePhone.value,
+
+email:
+profileEmail.value
+
+}
+
+);
+
+showProfile();
+
+alert(
+"Saved"
+);
+
+}
+
+function showProfile(){
+
+const p=
+read(
+"profile",
+{}
+);
+
+profileInfo.innerHTML=
+
+`
+
+👤 ${p.name||"-"}
+
+<br><br>
+
+📞 ${p.phone||"-"}
+
+<br><br>
+
+📧 ${p.email||"-"}
+
+`;
+
+}
+
+/* HISTORY */
+
+function showHistory(){
+
+historyList.innerHTML="";
+
+read(
+"history",
+[]
+)
+.slice()
+.reverse()
+.forEach(
+
+x=>{
+
+historyList.innerHTML+=
+
+`
+
+<div class="history">
+
+🚨 SOS Sent
+
+<br><br>
+
+${x.time}
+
+</div>
+
+`;
+
+}
+
+);
+
+updateStats();
+
+}
+
+/* SOS */
+
+async function sendSOS(){
+
+const ok=
+await getLocation();
+
+if(
+!ok
+){
+
+alert(
+"Location required"
+);
+
+return;
+
+}
+
+const contacts=
+read(
+"contacts",
+[]
+);
+
+if(
+contacts.length===0
+){
+
+alert(
+"Add contacts"
+);
+
+return;
+
+}
+
+const p=
+read(
+"profile",
+{}
+);
+
+const map=
+
+`https://maps.google.com/?q=${lat},${lng}`;
+
+const msg=
+
+`🚨 EMERGENCY ALERT
+
+👤 ${p.name||"User"}
+
+📞 ${p.phone||"-"}
+
+📍 ${map}
+
+Sent via SafeAlert`;
+
+let history=
+read(
+"history",
+[]
+);
+
+history.push({
+
+time:
+new Date()
+.toLocaleString(),
+
+map
+
+});
+
+write(
+"history",
+history);
+
+showHistory();
+
+window.location.href=
+
+`sms:${contacts.map(
+x=>x.phone
+).join(",")}?body=${encodeURIComponent(msg)}`;
+
+}
+
+/* CALL */
+
+function callNumber(n){
+
+window.location.href=
+`tel:${n}`;
+
+}
+
+function showSafety(){
+
+safetyContacts.innerHTML="";
+
+read(
+"contacts",
+[]
+)
+.forEach(
+
+c=>{
+
+safetyContacts.innerHTML+=
+
+`
+
+<div class="contact">
+
+👤 ${c.name}
+
+<br><br>
+
+<button
+class="primary-btn"
+
+onclick=
+
+"callNumber('${c.phone}')">
+
+Call
+
+</button>
+
+</div>
+
+`;
+
+}
+
+);
+
+}
+
+/* SHAKE */
+
+window.addEventListener(
+
+"devicemotion",
+
+(e)=>{
+
+const a=
+e.accelerationIncludingGravity;
+
+if(
+!a
+)return;
+
+const force=
+
+Math.abs(a.x)+
+Math.abs(a.y)+
+Math.abs(a.z);
+
+if(
+force>40
+){
+
+const now=
+Date.now();
+
+if(
+now-lastShake<5000
+)
+return;
+
+lastShake=now;
+
+if(
+confirm(
+"Send SOS?"
+)
+){
+
+sendSOS();
+
+}
+
+}
+
+}
+
+);
+
+/* NAV */
+
+function tab(id,el){
+
+document
+.querySelectorAll(
+".page"
+)
+.forEach(
+x=>
+x.classList.remove(
+"active"
+)
+);
+
+document
+.getElementById(
+id
+)
+.classList.add(
+"active"
+);
+
+document
+.querySelectorAll(
+".item"
+)
+.forEach(
+x=>
+x.classList.remove(
+"selected"
+)
+);
+
+el.classList.add(
+"selected"
+);
+
+}
+
+/* START */
+
+window.onload=()=>{
+
+showContacts();
+
+showProfile();
+
+showHistory();
+
+showSafety();
+
+updateStats();
+
+/* ask permission */
+
+setTimeout(
+
+()=>{
+
+getLocation();
+
+},
+
+800
+
+);
+
+};
+
+</script>
+
+</body>
+
+</html>
